@@ -1,0 +1,5 @@
+name = SCD Calendar
+description = "Google Calendar integration for the SCD"
+dependencies[] = gauth
+package = SCD
+core = 7.x

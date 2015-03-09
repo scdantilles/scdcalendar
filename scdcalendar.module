@@ -1,0 +1,66 @@
+<?php
+
+function scdcalendar_help($path, $arg) {
+  switch ($path) {
+    case "admin/help#scdcalendar":
+      return '<p>' . t("Help text") . '</p>';
+      break;
+  }
+} 
+
+function scdcalendar_menu() {
+
+  $items[] = array(
+    'path' => 'today',
+    'title' => 'Aujourd\'hui',
+    'page callback' => 'scdcalendar_today',
+    'access callback' => TRUE,
+  );
+
+  return $items;
+}
+
+function scdcalendar_today() {
+
+  $dt = new DateTime();
+  $now = $dt->getTimestamp();
+
+  $out = "<h2>Horaires d'ouverture</h2>";
+
+  $nodes = node_load_multiple(array(), array('type' => 'library'));
+
+  foreach ($nodes as $node) {
+    if (!array_key_exists(LANGUAGE_NONE, $node->field_google_account_name)
+     or !array_key_exists(LANGUAGE_NONE, $node->field_calendar_id))
+      continue;
+
+    $out .= "<h3>" . $node->title . "</h3>";
+
+    $accountname = $node->field_google_account_name[LANGUAGE_NONE][0]['value'];
+    $calid = $node->field_calendar_id[LANGUAGE_NONE][0]['value'];
+
+    $client = gauth_client_get($accountname, TRUE);
+
+    $service = new Google_Service_Calendar($client);
+
+    $events = $service->events->listEvents($calid);
+
+    foreach ($events->getItems() as $event) {
+      $instances = $service->events->instances($calid, $event->id);
+      foreach ($instances->getItems() as $instance) {
+        $start = strtotime($instance->getStart()->dateTime);
+        $end = strtotime($instance->getEnd()->dateTime);
+        if (date('y-m-d', $start) == date('y-m-d', $now)) {
+          $out .= "<p>De " . date('G\:i', $start) . " a " . date('H\:i', $end) . "</p>";
+        }
+      }
+    }
+  }
+
+  //$out .= "<h2>Debug</h2>";
+  //$out .= "<pre>" . print_r($nodes, TRUE) . "</pre>";
+
+  return $out;
+}
+
+?>
