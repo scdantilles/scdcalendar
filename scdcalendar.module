@@ -17,6 +17,13 @@ function scdcalendar_menu() {
     'access callback' => TRUE,
   );
 
+  $items[] = array(
+    'path' => 'thisweek',
+    'title' => 'Cette semaine',
+    'page callback' => 'scdcalendar_thisweek',
+    'access callback' => TRUE,
+  );
+
   return $items;
 }
 
@@ -29,6 +36,7 @@ function scdcalendar_today() {
 
   $nodes = node_load_multiple(array(), array('type' => 'library'));
 
+  // Loop over libraries
   foreach ($nodes as $node) {
     if (!array_key_exists(LANGUAGE_NONE, $node->field_google_account_name)
      or !array_key_exists(LANGUAGE_NONE, $node->field_calendar_id))
@@ -45,13 +53,14 @@ function scdcalendar_today() {
 
     $events = $service->events->listEvents($calid);
 
+    // Loop over events
     foreach ($events->getItems() as $event) {
       $instances = $service->events->instances($calid, $event->id);
       foreach ($instances->getItems() as $instance) {
         $start = strtotime($instance->getStart()->dateTime);
         $end = strtotime($instance->getEnd()->dateTime);
         if (date('y-m-d', $start) == date('y-m-d', $now)) {
-          $out .= "<p>De " . date('G\:i', $start) . " a " . date('H\:i', $end) . "</p>";
+          $out .= "<p>De " . date('G\:i', $start) . " a " . date('G\:i', $end) . "</p>";
         }
       }
     }
@@ -59,6 +68,70 @@ function scdcalendar_today() {
 
   //$out .= "<h2>Debug</h2>";
   //$out .= "<pre>" . print_r($nodes, TRUE) . "</pre>";
+
+  return $out;
+}
+
+function scdcalendar_thisweek() {
+
+  $oldLocale = setlocale(LC_TIME, '0');
+  setlocale(LC_TIME, 'fr_FR.UTF8', 'fr.UTF8', 'fr_FR.UTF-8', 'fr.UTF-8');
+
+  $dt = new DateTime();
+  $now = $dt->getTimestamp();
+
+  $out = "<h2>Horaires d'ouverture</h2>";
+
+  $nodes = node_load_multiple(array(), array('type' => 'library'));
+
+  // Loop over libraries
+  foreach ($nodes as $node) {
+    if (!array_key_exists(LANGUAGE_NONE, $node->field_google_account_name)
+     or !array_key_exists(LANGUAGE_NONE, $node->field_calendar_id))
+      continue;
+
+    $out .= "<h3>" . $node->title . "</h3>";
+
+    $accountname = $node->field_google_account_name[LANGUAGE_NONE][0]['value'];
+    $calid = $node->field_calendar_id[LANGUAGE_NONE][0]['value'];
+
+    $client = gauth_client_get($accountname, TRUE);
+
+    $service = new Google_Service_Calendar($client);
+
+    $events = $service->events->listEvents($calid);
+
+    // Loop over events
+    $days = array();
+    foreach ($events->getItems() as $event) {
+      $instances = $service->events->instances($calid, $event->id);
+      foreach ($instances->getItems() as $instance) {
+        $start = strtotime($instance->getStart()->dateTime);
+        $end = strtotime($instance->getEnd()->dateTime);
+        if (date('W', $start) == date('W', $now)) {
+          //$out .= "<p>De " . date('y/m/d G\:i', $start) . " a " . date('y/m/d H\:i', $end) . "</p>";
+          $days[strftime('%A', $start)][] = array(
+            'start' => date('G\:i', $start),
+            'end'   => date('G\:i', $end)
+          );
+        }
+      }
+    }
+
+    // Loop over days
+    foreach ($days as $day => $fields) {
+      $out .= "<p>" . $day . ", ";
+      $i = 0;
+      foreach ($fields as $field) {
+        $out .= $i ? " et de " : "de ";
+        $out .= $field['start'] . " a " . $field['end'];
+        $i++;
+      }
+      $out .= "</p>";
+    }
+  }
+
+  setlocale(LC_TIME, $oldLocale);
 
   return $out;
 }
