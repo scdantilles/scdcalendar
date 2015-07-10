@@ -64,6 +64,10 @@ function scdcalendar_today() {
         }
       }
     }
+    if (!count($events->getItems()))
+    {
+      $out .= "<p>Fermé aujourd'hui.</p>";
+    }
   }
 
   //$out .= "<h2>Debug</h2>";
@@ -87,7 +91,7 @@ function scdcalendar_thisweek() {
   // Loop over libraries
   foreach ($nodes as $node) {
     if (!array_key_exists(LANGUAGE_NONE, $node->field_google_account_name)
-     or !array_key_exists(LANGUAGE_NONE, $node->field_calendar_id))
+     || !array_key_exists(LANGUAGE_NONE, $node->field_calendar_id))
       continue;
 
     $out .= "<h3>" . $node->title . "</h3>";
@@ -128,6 +132,11 @@ function scdcalendar_thisweek() {
         $i++;
       }
       $out .= "</p>";
+    }
+
+    if (!count($days))
+    {
+      $out .= "<p>Fermé cette semaine.</p>";
     }
   }
 
