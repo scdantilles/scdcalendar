@@ -113,8 +113,7 @@ function scdcalendar_thisweek() {
         $start = strtotime($instance->getStart()->dateTime);
         $end = strtotime($instance->getEnd()->dateTime);
         if (date('W', $start) == date('W', $now)) {
-          //$out .= "<p>De " . date('y/m/d G\:i', $start) . " a " . date('y/m/d H\:i', $end) . "</p>";
-          $days[strftime('%A', $start)][] = array(
+          $days[$instance->getStart()->dateTime][] = array(
             'start' => date('G\:i', $start),
             'end'   => date('G\:i', $end)
           );
@@ -123,8 +122,9 @@ function scdcalendar_thisweek() {
     }
 
     // Loop over days
+    ksort($days);
     foreach ($days as $day => $fields) {
-      $out .= "<p>" . $day . ", ";
+      $out .= "<p>" . strftime("%A", strtotime($day)) . ", ";
       $i = 0;
       foreach ($fields as $field) {
         $out .= $i ? " et de " : "de ";
