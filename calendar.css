@@ -1,0 +1,7 @@
+.scdcalcol {
+  height: 300px;
+}
+
+.day.busy {
+  border-bottom: 3px solid green;
+}

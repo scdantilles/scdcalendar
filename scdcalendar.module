@@ -24,6 +24,14 @@ function scdcalendar_menu() {
     'access callback' => TRUE,
   );
 
+  $items[] = array(
+    'path' => 'thisyear',
+    'title' => 'Cette année',
+    'page callback' => 'scdcalendar_thisyear',
+    'page arguments' => array(1),
+    'access callback' => TRUE,
+  );
+
   return $items;
 }
 
@@ -124,7 +132,7 @@ function scdcalendar_thisweek() {
     // Loop over days
     ksort($days);
     foreach ($days as $day => $fields) {
-      $out .= "<p>" . strftime("%A", strtotime($day)) . ", ";
+      $out .= "<p>" . ucfirst(strftime("%A %e", strtotime($day))) . ", ";
       $i = 0;
       foreach ($fields as $field) {
         $out .= $i ? " et de " : "de ";
@@ -142,6 +150,94 @@ function scdcalendar_thisweek() {
 
   setlocale(LC_TIME, $oldLocale);
 
+  return $out;
+}
+
+function build_calendar($month, $year, $days) {
+  $daysOfWeek = array('D','L','M','M','J','V','S');
+  $firstDayOfMonth = mktime(0, 0, 0, $month, 1, $year);
+  $numberDays = date('t', $firstDayOfMonth);
+
+  $dateComponents = getdate($firstDayOfMonth);
+  $monthName = $dateComponents['month'];
+  $dayOfWeek = $dateComponents['wday'];
+
+  $calendar = "<table class=\"scdcalendar table\">";
+  $calendar .= "<caption>$monthName</caption>";
+  $calendar .= "<tr>";
+
+  foreach($daysOfWeek as $day) {
+    $calendar .= "<th class='header'>$day</th>";
+  } 
+
+  $currentDay = 1;
+
+  $calendar .= "</tr><tr>";
+
+  if ($dayOfWeek > 0) { 
+    $calendar .= "<td colspan='$dayOfWeek'>&nbsp;</td>";
+  }
+  
+  $month = str_pad($month, 2, "0", STR_PAD_LEFT);
+
+  while ($currentDay <= $numberDays) {
+    if ($dayOfWeek == 7) {
+      $dayOfWeek = 0;
+      $calendar .= "</tr><tr>";
+    }
+    
+    $currentDayRel = str_pad($currentDay, 2, "0", STR_PAD_LEFT);
+    $date = "$year-$month-$currentDayRel";
+    $busy = "";
+    if (in_array($date, $days))
+      $busy = "busy";
+    $calendar .= "<td class='day $busy' rel='$date'>$currentDay</td>";
+
+    $currentDay++;
+    $dayOfWeek++;
+  }
+
+  if ($dayOfWeek != 7) {
+    $remainingDays = 7 - $dayOfWeek;
+    $calendar .= "<td colspan='$remainingDays'>&nbsp;</td>";
+  }
+  
+  $calendar .= "</tr>";
+  $calendar .= "</table>";
+
+  return $calendar;
+}
+
+function scdcalendar_thisyear($nid) {
+  $node = node_load($nid);
+
+  $accountname = $node->field_google_account_name[LANGUAGE_NONE][0]['value'];
+  $calid = $node->field_calendar_id[LANGUAGE_NONE][0]['value'];
+
+  $client = gauth_client_get($accountname, TRUE);
+
+  $service = new Google_Service_Calendar($client);
+
+  $events = $service->events->listEvents($calid);
+  $days = array();
+
+  foreach ($events->getItems() as $event) {
+    $instances = $service->events->instances($calid, $event->id);
+    foreach ($instances->getItems() as $instance) {
+      $days[] = date('Y-m-d', strtotime($instance->getStart()->dateTime));
+    }   
+  }
+
+  $out = "<h2>Jours d'ouverture</h2>";
+
+  $out .= "<div class=\"containeri-fluid\">";
+  $out .= "<div class=\"row\">";
+  for ($i = 1; $i <= 12; $i++)
+  {
+    $out .= "<div class=\"scdcalcol col-md-4 col-sm-6 col-xs-12\">" . build_calendar($i, 2015, $days) . "</div>";
+  }
+  $out .= "</div>";
+  $out .= "</div>";
   return $out;
 }
 
