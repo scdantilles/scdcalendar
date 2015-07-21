@@ -3,5 +3,5 @@
 }
 
 .day.busy {
-  border-bottom: 3px solid green;
+  background-color: #dff0d8;
 }

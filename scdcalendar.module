@@ -24,12 +24,13 @@ function scdcalendar_menu() {
     'access callback' => TRUE,
   );
 
-  $items[] = array(
-    'path' => 'thisyear',
-    'title' => 'Cette année',
+  $items['node/%/thisyear'] = array(
+    'title' => 'Jours d\'ouverture',
     'page callback' => 'scdcalendar_thisyear',
     'page arguments' => array(1),
+    'access arguments' => array(1),
     'access callback' => TRUE,
+    'type' => MENU_LOCAL_TASK
   );
 
   return $items;
@@ -228,9 +229,7 @@ function scdcalendar_thisyear($nid) {
     }   
   }
 
-  $out = "<h2>Jours d'ouverture</h2>";
-
-  $out .= "<div class=\"containeri-fluid\">";
+  $out = "<div class=\"containeri-fluid\">";
   $out .= "<div class=\"row\">";
   for ($i = 1; $i <= 12; $i++)
   {
