@@ -24,13 +24,24 @@ function scdcalendar_menu() {
     'access callback' => TRUE,
   );
 
-  $items['node/%/thisyear'] = array(
-    'title' => 'Jours d\'ouverture',
-    'page callback' => 'scdcalendar_thisyear',
+  $items['node/%/thisweeklib'] = array(
+    'title' => 'Cette semaine',
+    'page callback' => 'scdcalendar_thisweeklib',
     'page arguments' => array(1),
     'access arguments' => array(1),
     'access callback' => TRUE,
-    'type' => MENU_LOCAL_TASK
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 1,
+  );
+
+  $items['node/%/thisyearlib'] = array(
+    'title' => 'Cette année',
+    'page callback' => 'scdcalendar_thisyearlib',
+    'page arguments' => array(1),
+    'access arguments' => array(1),
+    'access callback' => TRUE,
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 2,
   );
 
   return $items;
@@ -86,75 +97,19 @@ function scdcalendar_today() {
 }
 
 function scdcalendar_thisweek() {
-
-  $oldLocale = setlocale(LC_TIME, '0');
-  setlocale(LC_TIME, 'fr_FR.UTF8', 'fr.UTF8', 'fr_FR.UTF-8', 'fr.UTF-8');
-
-  $dt = new DateTime();
-  $now = $dt->getTimestamp();
-
   $out = "<h2>Horaires d'ouverture</h2>";
 
   $nodes = node_load_multiple(array(), array('type' => 'library'));
 
   // Loop over libraries
   foreach ($nodes as $node) {
-    if (!array_key_exists(LANGUAGE_NONE, $node->field_google_account_name)
-     || !array_key_exists(LANGUAGE_NONE, $node->field_calendar_id))
-      continue;
-
-    $out .= "<h3>" . $node->title . "</h3>";
-
-    $accountname = $node->field_google_account_name[LANGUAGE_NONE][0]['value'];
-    $calid = $node->field_calendar_id[LANGUAGE_NONE][0]['value'];
-
-    $client = gauth_client_get($accountname, TRUE);
-
-    $service = new Google_Service_Calendar($client);
-
-    $events = $service->events->listEvents($calid);
-
-    // Loop over events
-    $days = array();
-    foreach ($events->getItems() as $event) {
-      $instances = $service->events->instances($calid, $event->id);
-      foreach ($instances->getItems() as $instance) {
-        $start = strtotime($instance->getStart()->dateTime);
-        $end = strtotime($instance->getEnd()->dateTime);
-        if (date('W', $start) == date('W', $now)) {
-          $days[$instance->getStart()->dateTime][] = array(
-            'start' => date('G\:i', $start),
-            'end'   => date('G\:i', $end)
-          );
-        }
-      }
-    }
-
-    // Loop over days
-    ksort($days);
-    foreach ($days as $day => $fields) {
-      $out .= "<p>" . ucfirst(strftime("%A %e", strtotime($day))) . ", ";
-      $i = 0;
-      foreach ($fields as $field) {
-        $out .= $i ? " et de " : "de ";
-        $out .= $field['start'] . " a " . $field['end'];
-        $i++;
-      }
-      $out .= "</p>";
-    }
-
-    if (!count($days))
-    {
-      $out .= "<p>Fermé cette semaine.</p>";
-    }
+    $out .= build_week_calendar($node);
   }
-
-  setlocale(LC_TIME, $oldLocale);
 
   return $out;
 }
 
-function build_calendar($month, $year, $days) {
+function build_year_calendar($month, $year, $days) {
   $daysOfWeek = array('D','L','M','M','J','V','S');
   $firstDayOfMonth = mktime(0, 0, 0, $month, 1, $year);
   $numberDays = date('t', $firstDayOfMonth);
@@ -209,7 +164,72 @@ function build_calendar($month, $year, $days) {
   return $calendar;
 }
 
-function scdcalendar_thisyear($nid) {
+function build_week_calendar($node) {
+  $oldLocale = setlocale(LC_TIME, '0');
+  setlocale(LC_TIME, 'fr_FR.UTF8', 'fr.UTF8', 'fr_FR.UTF-8', 'fr.UTF-8');
+
+  $dt = new DateTime();
+  $now = $dt->getTimestamp();
+
+  $out = "";
+
+  if (!array_key_exists(LANGUAGE_NONE, $node->field_google_account_name)
+   || !array_key_exists(LANGUAGE_NONE, $node->field_calendar_id))
+    continue;
+
+  $accountname = $node->field_google_account_name[LANGUAGE_NONE][0]['value'];
+  $calid = $node->field_calendar_id[LANGUAGE_NONE][0]['value'];
+
+  $client = gauth_client_get($accountname, TRUE);
+
+  $service = new Google_Service_Calendar($client);
+
+  $events = $service->events->listEvents($calid);
+
+  // Loop over events
+  $days = array();
+  foreach ($events->getItems() as $event) {
+    $instances = $service->events->instances($calid, $event->id);
+    foreach ($instances->getItems() as $instance) {
+      $start = strtotime($instance->getStart()->dateTime);
+      $end = strtotime($instance->getEnd()->dateTime);
+      if (date('W', $start) == date('W', $now)) {
+        $days[$instance->getStart()->dateTime][] = array(
+          'start' => date('G\:i', $start),
+          'end'   => date('G\:i', $end)
+        );
+      }
+    }
+  }
+
+  // Loop over days
+  ksort($days);
+  foreach ($days as $day => $fields) {
+    $out .= "<p>" . ucfirst(strftime("%A %e", strtotime($day))) . ", ";
+    $i = 0;
+    foreach ($fields as $field) {
+      $out .= $i ? " et de " : "de ";
+      $out .= $field['start'] . " a " . $field['end'];
+      $i++;
+    }
+    $out .= "</p>";
+  }
+
+  if (!count($days))
+  {
+    $out .= "<p>Fermé cette semaine.</p>";
+  }
+
+  setlocale(LC_TIME, $oldLocale);
+
+  return $out;
+}
+
+function scdcalendar_thisweeklib($nid) {
+  return build_week_calendar(node_load($nid));
+}
+
+function scdcalendar_thisyearlib($nid) {
   $node = node_load($nid);
 
   $accountname = $node->field_google_account_name[LANGUAGE_NONE][0]['value'];
@@ -233,7 +253,7 @@ function scdcalendar_thisyear($nid) {
   $out .= "<div class=\"row\">";
   for ($i = 1; $i <= 12; $i++)
   {
-    $out .= "<div class=\"scdcalcol col-md-4 col-sm-6 col-xs-12\">" . build_calendar($i, 2015, $days) . "</div>";
+    $out .= "<div class=\"scdcalcol col-md-4 col-sm-6 col-xs-12\">" . build_year_calendar($i, 2015, $days) . "</div>";
   }
   $out .= "</div>";
   $out .= "</div>";
