@@ -47,6 +47,51 @@ function scdcalendar_menu() {
   return $items;
 }
 
+function scdcalendar_node_view($node, $view_mode, $langcode) {
+  if ($node->type == 'library' && $view_mode == 'full') {
+
+    $dt = new DateTime();
+    $now = $dt->getTimestamp();
+
+    if (!array_key_exists(LANGUAGE_NONE, $node->field_google_account_name)
+     or !array_key_exists(LANGUAGE_NONE, $node->field_calendar_id))
+      continue;
+
+    $accountname = $node->field_google_account_name[LANGUAGE_NONE][0]['value'];
+    $calid = $node->field_calendar_id[LANGUAGE_NONE][0]['value'];
+
+    $client = gauth_client_get($accountname, TRUE);
+
+    $service = new Google_Service_Calendar($client);
+
+    $events = $service->events->listEvents($calid);
+
+    $out = "";
+
+    // Loop over events
+    foreach ($events->getItems() as $event) {
+      $instances = $service->events->instances($calid, $event->id);
+      foreach ($instances->getItems() as $instance) {
+        $start = strtotime($instance->getStart()->dateTime);
+        $end = strtotime($instance->getEnd()->dateTime);
+        if (date('y-m-d', $start) == date('y-m-d', $now)) {
+          $out .= "Ouvert, de " . date('G\:i', $start) . " à " . date('G\:i', $end);
+        }
+      }
+    }
+    if (!count($events->getItems()))
+    {
+      $out .= "Fermé";
+    }
+
+    $node->content ['opentoday_field'] = array(
+      '#markup' => '<div class="field field-name-field-opentoday field-type-text field-label-above"><div class="field-label">Aujourd\'hui :&nbsp;</div><div class="field-items"><div class="field-item even">'.$out.'</div></div></div>',
+      '#weight' => 10,
+      #'#theme' => 'mymodule_my_additional_field',
+    );
+  }
+}
+
 function scdcalendar_today() {
 
   $dt = new DateTime();
@@ -80,7 +125,7 @@ function scdcalendar_today() {
         $start = strtotime($instance->getStart()->dateTime);
         $end = strtotime($instance->getEnd()->dateTime);
         if (date('y-m-d', $start) == date('y-m-d', $now)) {
-          $out .= "<p>De " . date('G\:i', $start) . " a " . date('G\:i', $end) . "</p>";
+          $out .= "<p>De " . date('G\:i', $start) . " à " . date('G\:i', $end) . "</p>";
         }
       }
     }
