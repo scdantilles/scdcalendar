@@ -103,6 +103,7 @@ function scdcalendar_thisweek() {
 
   // Loop over libraries
   foreach ($nodes as $node) {
+    $out .= "<h3>" . $node->title . "</h3>";
     $out .= build_week_calendar($node);
   }
 
