@@ -11,9 +11,11 @@ function scdcalendar_help($path, $arg) {
 function scdcalendar_menu() {
 
   $items[] = array(
-    'path' => 'today',
+    'path' => 'todaypole/%',
     'title' => 'Aujourd\'hui',
-    'page callback' => 'scdcalendar_today',
+    'page callback' => 'scdcalendar_todaypole',
+    'page arguments' => array(1),
+    'access arguments' => array(1),
     'access callback' => TRUE,
   );
 
@@ -47,6 +49,23 @@ function scdcalendar_menu() {
   return $items;
 }
 
+function service_for_node($node) {
+    if (!array_key_exists(LANGUAGE_NONE, $node->field_google_account_name)
+     or !array_key_exists(LANGUAGE_NONE, $node->field_calendar_id))
+      return false;
+
+    $accountname = $node->field_google_account_name[LANGUAGE_NONE][0]['value'];
+    $calid = $node->field_calendar_id[LANGUAGE_NONE][0]['value'];
+
+    $client = gauth_client_get($accountname, TRUE);
+
+    $service = new Google_Service_Calendar($client);
+
+    $events = $service->events->listEvents($calid);
+
+    return array($service, $events, $calid);
+}
+
 function scdcalendar_node_view($node, $view_mode, $langcode) {
   if ($node->type == 'library' && $view_mode == 'full') {
 
@@ -62,9 +81,7 @@ function scdcalendar_node_view($node, $view_mode, $langcode) {
 
     $client = gauth_client_get($accountname, TRUE);
 
-    $service = new Google_Service_Calendar($client);
-
-    $events = $service->events->listEvents($calid);
+    list($service, $events, $calid) = service_for_node($node);
 
     $out = "";
 
@@ -87,36 +104,36 @@ function scdcalendar_node_view($node, $view_mode, $langcode) {
     $node->content ['opentoday_field'] = array(
       '#markup' => '<div class="field field-name-field-opentoday field-type-text field-label-above"><div class="field-label">Aujourd\'hui :&nbsp;</div><div class="field-items"><div class="field-item even">'.$out.'</div></div></div>',
       '#weight' => 10,
-      #'#theme' => 'mymodule_my_additional_field',
     );
   }
 }
 
-function scdcalendar_today() {
-
+function scdcalendar_todaypole($pole) {
   $dt = new DateTime();
   $now = $dt->getTimestamp();
 
   $out = "<h2>Horaires d'ouverture</h2>";
 
-  $nodes = node_load_multiple(array(), array('type' => 'library'));
+  $query = new EntityFieldQuery();
+
+  $query->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'library')
+    ->fieldCondition('field_pole', 'tid', $pole)
+    ->propertyCondition('status', NODE_PUBLISHED);
+
+  $result = $query->execute();
+
+  $nodes= array();
+  if (isset($result['node'])) {
+    $nids = array_keys($result['node']);
+    $nodes = entity_load('node', $nids);
+  }
 
   // Loop over libraries
   foreach ($nodes as $node) {
-    if (!array_key_exists(LANGUAGE_NONE, $node->field_google_account_name)
-     or !array_key_exists(LANGUAGE_NONE, $node->field_calendar_id))
-      continue;
+    list($service, $events, $calid) = service_for_node($node);
 
     $out .= "<h3>" . $node->title . "</h3>";
-
-    $accountname = $node->field_google_account_name[LANGUAGE_NONE][0]['value'];
-    $calid = $node->field_calendar_id[LANGUAGE_NONE][0]['value'];
-
-    $client = gauth_client_get($accountname, TRUE);
-
-    $service = new Google_Service_Calendar($client);
-
-    $events = $service->events->listEvents($calid);
 
     // Loop over events
     foreach ($events->getItems() as $event) {
@@ -134,9 +151,6 @@ function scdcalendar_today() {
       $out .= "<p>Fermé aujourd'hui.</p>";
     }
   }
-
-  //$out .= "<h2>Debug</h2>";
-  //$out .= "<pre>" . print_r($nodes, TRUE) . "</pre>";
 
   return $out;
 }
@@ -219,18 +233,7 @@ function build_week_calendar($node) {
 
   $out = "";
 
-  if (!array_key_exists(LANGUAGE_NONE, $node->field_google_account_name)
-   || !array_key_exists(LANGUAGE_NONE, $node->field_calendar_id))
-    continue;
-
-  $accountname = $node->field_google_account_name[LANGUAGE_NONE][0]['value'];
-  $calid = $node->field_calendar_id[LANGUAGE_NONE][0]['value'];
-
-  $client = gauth_client_get($accountname, TRUE);
-
-  $service = new Google_Service_Calendar($client);
-
-  $events = $service->events->listEvents($calid);
+  list($service, $events, $calid) = service_for_node($node);
 
   // Loop over events
   $days = array();
@@ -278,14 +281,8 @@ function scdcalendar_thisweeklib($nid) {
 function scdcalendar_thisyearlib($nid) {
   $node = node_load($nid);
 
-  $accountname = $node->field_google_account_name[LANGUAGE_NONE][0]['value'];
-  $calid = $node->field_calendar_id[LANGUAGE_NONE][0]['value'];
+  list($service, $events, $calid) = service_for_node($node);
 
-  $client = gauth_client_get($accountname, TRUE);
-
-  $service = new Google_Service_Calendar($client);
-
-  $events = $service->events->listEvents($calid);
   $days = array();
 
   foreach ($events->getItems() as $event) {
