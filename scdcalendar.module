@@ -20,9 +20,11 @@ function scdcalendar_menu() {
   );
 
   $items[] = array(
-    'path' => 'thisweek',
+    'path' => 'thisweekpole',
     'title' => 'Cette semaine',
-    'page callback' => 'scdcalendar_thisweek',
+    'page callback' => 'scdcalendar_thisweekpole',
+    'page arguments' => array(1),
+    'access arguments' => array(1),
     'access callback' => TRUE,
   );
 
@@ -123,7 +125,7 @@ function scdcalendar_todaypole($pole) {
 
   $result = $query->execute();
 
-  $nodes= array();
+  $nodes = array();
   if (isset($result['node'])) {
     $nids = array_keys($result['node']);
     $nodes = entity_load('node', $nids);
@@ -155,10 +157,23 @@ function scdcalendar_todaypole($pole) {
   return $out;
 }
 
-function scdcalendar_thisweek() {
+function scdcalendar_thisweekpole($pole) {
   $out = "<h2>Horaires d'ouverture</h2>";
 
-  $nodes = node_load_multiple(array(), array('type' => 'library'));
+  $query = new EntityFieldQuery();
+
+  $query->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'library')
+    ->fieldCondition('field_pole', 'tid', $pole)
+    ->propertyCondition('status', NODE_PUBLISHED);
+
+  $result = $query->execute();
+
+  $nodes = array();
+  if (isset($result['node'])) {
+    $nids = array_keys($result['node']);
+    $nodes = entity_load('node', $nids);
+  }
 
   // Loop over libraries
   foreach ($nodes as $node) {
