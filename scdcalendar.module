@@ -191,7 +191,7 @@ function build_year_calendar($month, $year, $days) {
   $numberDays = date('t', $firstDayOfMonth);
 
   $dateComponents = getdate($firstDayOfMonth);
-  $monthName = $dateComponents['month'];
+  $monthName = ucfirst(strftime("%B", $firstDayOfMonth));
   $dayOfWeek = $dateComponents['wday'];
 
   $calendar = "<table class=\"scdcalendar table\">";
@@ -315,6 +315,9 @@ function scdcalendar_thisweeklib($nid) {
 function scdcalendar_thisyearlib($nid) {
   $node = node_load($nid);
 
+  $oldLocale = setlocale(LC_TIME, '0');
+  setlocale(LC_TIME, 'fr_FR.UTF8', 'fr.UTF8', 'fr_FR.UTF-8', 'fr.UTF-8');
+
   if (!array_key_exists(LANGUAGE_NONE, $node->field_google_account_name)
    or !array_key_exists(LANGUAGE_NONE, $node->field_calendar_id))
     return false;
@@ -351,6 +354,9 @@ function scdcalendar_thisyearlib($nid) {
   }
   $out .= "</div>";
   $out .= "</div>";
+
+  setlocale(LC_TIME, $oldLocale);
+
   return $out;
 }
 
