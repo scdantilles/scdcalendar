@@ -5,3 +5,11 @@
 .day.busy {
   background-color: #dff0d8;
 }
+
+.scdcalendar caption {
+  line-height: 40px;
+}
+
+.scdcalendar {
+  margin: 20px 0 0 0;
+}
