@@ -51,7 +51,9 @@ function scdcalendar_menu() {
   return $items;
 }
 
-function service_for_node($node) {
+function scdcalendar_node_view($node, $view_mode, $langcode) {
+  if ($node->type == 'library' && $view_mode == 'full') {
+
     if (!array_key_exists(LANGUAGE_NONE, $node->field_google_account_name)
      or !array_key_exists(LANGUAGE_NONE, $node->field_calendar_id))
       return false;
@@ -63,40 +65,24 @@ function service_for_node($node) {
 
     $service = new Google_Service_Calendar($client);
 
-    $events = $service->events->listEvents($calid);
+    $timeMin = new DateTime();
+    $timeMin->setTime( 0,  0);
+    $timeMax = new DateTime();
+    $timeMax->setTime(23, 59);
 
-    return array($service, $events, $calid);
-}
-
-function scdcalendar_node_view($node, $view_mode, $langcode) {
-  if ($node->type == 'library' && $view_mode == 'full') {
-
-    $dt = new DateTime();
-    $now = $dt->getTimestamp();
-
-    if (!array_key_exists(LANGUAGE_NONE, $node->field_google_account_name)
-     or !array_key_exists(LANGUAGE_NONE, $node->field_calendar_id))
-      continue;
-
-    $accountname = $node->field_google_account_name[LANGUAGE_NONE][0]['value'];
-    $calid = $node->field_calendar_id[LANGUAGE_NONE][0]['value'];
-
-    $client = gauth_client_get($accountname, TRUE);
-
-    list($service, $events, $calid) = service_for_node($node);
+    $events = $service->events->listEvents($calid, array(
+      'singleEvents' => 'true',
+      'timeMin' => $timeMin->format(DateTime::RFC3339),
+      'timeMax' => $timeMax->format(DateTime::RFC3339),
+    ));
 
     $out = "";
 
     // Loop over events
     foreach ($events->getItems() as $event) {
-      $instances = $service->events->instances($calid, $event->id);
-      foreach ($instances->getItems() as $instance) {
-        $start = strtotime($instance->getStart()->dateTime);
-        $end = strtotime($instance->getEnd()->dateTime);
-        if (date('y-m-d', $start) == date('y-m-d', $now)) {
-          $out .= "Ouvert, de " . date('G\:i', $start) . " à " . date('G\:i', $end);
-        }
-      }
+      $start = strtotime($event->getStart()->dateTime);
+      $end = strtotime($event->getEnd()->dateTime);
+      $out .= "Ouvert, de " . date('G\:i', $start) . " à " . date('G\:i', $end) . "<br/>";
     }
     if (!count($events->getItems()))
     {
@@ -133,20 +119,35 @@ function scdcalendar_todaypole($pole) {
 
   // Loop over libraries
   foreach ($nodes as $node) {
-    list($service, $events, $calid) = service_for_node($node);
+    if (!array_key_exists(LANGUAGE_NONE, $node->field_google_account_name)
+     or !array_key_exists(LANGUAGE_NONE, $node->field_calendar_id))
+      continue;
+
+    $accountname = $node->field_google_account_name[LANGUAGE_NONE][0]['value'];
+    $calid = $node->field_calendar_id[LANGUAGE_NONE][0]['value'];
+
+    $client = gauth_client_get($accountname, TRUE);
+
+    $service = new Google_Service_Calendar($client);
+
+    $timeMin = new DateTime();
+    $timeMin->setTime( 0,  0);
+    $timeMax = new DateTime();
+    $timeMax->setTime(23, 59);
+
+    $events = $service->events->listEvents($calid, array(
+      'singleEvents' => 'true',
+      'timeMin' => $timeMin->format(DateTime::RFC3339),
+      'timeMax' => $timeMax->format(DateTime::RFC3339),
+    ));
 
     $out .= "<h3>" . $node->title . "</h3>";
 
     // Loop over events
     foreach ($events->getItems() as $event) {
-      $instances = $service->events->instances($calid, $event->id);
-      foreach ($instances->getItems() as $instance) {
-        $start = strtotime($instance->getStart()->dateTime);
-        $end = strtotime($instance->getEnd()->dateTime);
-        if (date('y-m-d', $start) == date('y-m-d', $now)) {
-          $out .= "<p>De " . date('G\:i', $start) . " à " . date('G\:i', $end) . "</p>";
-        }
-      }
+      $start = strtotime($event->getStart()->dateTime);
+      $end = strtotime($event->getEnd()->dateTime);
+      $out .= "<p>De " . date('G\:i', $start) . " à " . date('G\:i', $end) . "</p>";
     }
     if (!count($events->getItems()))
     {
@@ -240,6 +241,28 @@ function build_year_calendar($month, $year, $days) {
 }
 
 function build_week_calendar($node) {
+  if (!array_key_exists(LANGUAGE_NONE, $node->field_google_account_name)
+   or !array_key_exists(LANGUAGE_NONE, $node->field_calendar_id))
+    return false;
+
+  $accountname = $node->field_google_account_name[LANGUAGE_NONE][0]['value'];
+  $calid = $node->field_calendar_id[LANGUAGE_NONE][0]['value'];
+
+  $client = gauth_client_get($accountname, TRUE);
+
+  $service = new Google_Service_Calendar($client);
+
+  $timeMin = new DateTime();
+  $timeMin->modify('-1 week');
+  $timeMax = new DateTime();
+  $timeMax->modify('+1 week');
+
+  $events = $service->events->listEvents($calid, array(
+    'singleEvents' => 'true',
+    'timeMin' => $timeMin->format(DateTime::RFC3339),
+    'timeMax' => $timeMax->format(DateTime::RFC3339),
+  ));
+
   $oldLocale = setlocale(LC_TIME, '0');
   setlocale(LC_TIME, 'fr_FR.UTF8', 'fr.UTF8', 'fr_FR.UTF-8', 'fr.UTF-8');
 
@@ -248,21 +271,17 @@ function build_week_calendar($node) {
 
   $out = "";
 
-  list($service, $events, $calid) = service_for_node($node);
-
   // Loop over events
   $days = array();
   foreach ($events->getItems() as $event) {
-    $instances = $service->events->instances($calid, $event->id);
-    foreach ($instances->getItems() as $instance) {
-      $start = strtotime($instance->getStart()->dateTime);
-      $end = strtotime($instance->getEnd()->dateTime);
-      if (date('W', $start) == date('W', $now)) {
-        $days[$instance->getStart()->dateTime][] = array(
-          'start' => date('G\:i', $start),
-          'end'   => date('G\:i', $end)
-        );
-      }
+    $start = strtotime($event->getStart()->dateTime);
+    $end = strtotime($event->getEnd()->dateTime);
+    if (date('W', $start) == date('W', $now)) {
+      $days[strftime("%Y-%m-%d", $start)][] = array(
+        'dateTime' => $event->getStart()->dateTime,
+        'start'    => date('G\:i', $start),
+        'end'      => date('G\:i', $end)
+      );
     }
   }
 
@@ -273,7 +292,7 @@ function build_week_calendar($node) {
     $i = 0;
     foreach ($fields as $field) {
       $out .= $i ? " et de " : "de ";
-      $out .= $field['start'] . " a " . $field['end'];
+      $out .= $field['start'] . " à " . $field['end'];
       $i++;
     }
     $out .= "</p>";
@@ -296,15 +315,32 @@ function scdcalendar_thisweeklib($nid) {
 function scdcalendar_thisyearlib($nid) {
   $node = node_load($nid);
 
-  list($service, $events, $calid) = service_for_node($node);
+  if (!array_key_exists(LANGUAGE_NONE, $node->field_google_account_name)
+   or !array_key_exists(LANGUAGE_NONE, $node->field_calendar_id))
+    return false;
+
+  $accountname = $node->field_google_account_name[LANGUAGE_NONE][0]['value'];
+  $calid = $node->field_calendar_id[LANGUAGE_NONE][0]['value'];
+
+  $client = gauth_client_get($accountname, TRUE);
+
+  $service = new Google_Service_Calendar($client);
+
+  $timeMin = new DateTime();
+  $timeMin->modify('-1 year');
+  $timeMax = new DateTime();
+  $timeMax->modify('+1 year');
+
+  $events = $service->events->listEvents($calid, array(
+    'singleEvents' => 'true',
+    'timeMin' => $timeMin->format(DateTime::RFC3339),
+    'timeMax' => $timeMax->format(DateTime::RFC3339),
+  ));
 
   $days = array();
 
   foreach ($events->getItems() as $event) {
-    $instances = $service->events->instances($calid, $event->id);
-    foreach ($instances->getItems() as $instance) {
-      $days[] = date('Y-m-d', strtotime($instance->getStart()->dateTime));
-    }   
+    $days[] = date('Y-m-d', strtotime($event->getStart()->dateTime));
   }
 
   $out = "<div class=\"containeri-fluid\">";
