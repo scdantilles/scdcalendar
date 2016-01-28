@@ -327,7 +327,6 @@ function build_week_calendar($node) {
   $service = new Google_Service_Calendar($client);
 
   $timeMin = new DateTime();
-  $timeMin->modify('-1 week');
   $timeMax = new DateTime();
   $timeMax->modify('+1 week');
 
@@ -350,13 +349,11 @@ function build_week_calendar($node) {
   foreach ($events->getItems() as $event) {
     $start = strtotime($event->getStart()->dateTime);
     $end = strtotime($event->getEnd()->dateTime);
-    if (date('W', $start) == date('W', $now)) {
-      $days[strftime("%Y-%m-%d", $start)][] = array(
-        'dateTime' => $event->getStart()->dateTime,
-        'start'    => date('G\:i', $start),
-        'end'      => date('G\:i', $end)
-      );
-    }
+    $days[strftime("%Y-%m-%d", $start)][] = array(
+      'dateTime' => $event->getStart()->dateTime,
+      'start'    => date('G\:i', $start),
+      'end'      => date('G\:i', $end)
+    );
   }
 
   // Loop over days
