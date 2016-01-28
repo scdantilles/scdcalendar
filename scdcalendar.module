@@ -117,7 +117,7 @@ function scdcalendar_todaypole($pole) {
     $nodes = entity_load('node', $nids);
   }
 
-  $out = '<table id="todaypole" class="table table-bordered table-hover">';
+  $out = '<table id="todaypole" class="table table-bordered table-hover hidden-xs">';
   // Loop over libraries
   foreach ($nodes as $node) {
     if (!array_key_exists(LANGUAGE_NONE, $node->field_google_account_name)
@@ -154,12 +154,80 @@ function scdcalendar_todaypole($pole) {
     {
       $out .= "<td>Fermé aujourd'hui</td>";
     }
-    $out .= "<td>Prochains jours</td>";
-    $out .= "<td>Venir</td>";
-    $out .= "<td>...</td>";
+    $out .= '<td><a href="node/'.$node->nid.'/thisweeklib">Prochains jours</a></td>';
+    $out .= '<td><a href="node/'.$node->nid.'">Venir</a></td>';
+    $out .= '<td><a href="node/'.$node->nid.'/thisyearlib">...</a></td>';
     $out .= "</tr>";
   }
   $out .= "</table>";
+
+  $out .= '<div id="todaypole" class="visible-xs">';
+  $out .= '<ul class="nav nav-tabs" role="tablist">';
+  // Build nav tabs
+  $i = 0;
+  foreach ($nodes as $node) {
+    if (!array_key_exists(LANGUAGE_NONE, $node->field_google_account_name)
+     or !array_key_exists(LANGUAGE_NONE, $node->field_calendar_id))
+      continue;
+    $shortname = $node->field_nom_court[LANGUAGE_NONE][0]['value'];
+    $active = $i == 0 ? 'active' : '';
+    $out .= '<li role="presentation" class="'. $active .'"><a href="#lib' . $node->nid . '" aria-controls="lib' . $node->nid . '" role="tab" data-toggle="tab">' . $shortname . '</a></li>';
+    $i++;
+  }
+  $out .= "</ul>";
+  $out .= '<div class="tab-content">';
+  // Loop over libraries
+  $i = 0;
+  foreach ($nodes as $node) {
+    if (!array_key_exists(LANGUAGE_NONE, $node->field_google_account_name)
+     or !array_key_exists(LANGUAGE_NONE, $node->field_calendar_id))
+      continue;
+
+    $accountname = $node->field_google_account_name[LANGUAGE_NONE][0]['value'];
+    $calid = $node->field_calendar_id[LANGUAGE_NONE][0]['value'];
+
+    $client = gauth_client_get($accountname, TRUE);
+
+    $service = new Google_Service_Calendar($client);
+
+    $timeMin = new DateTime();
+    $timeMin->setTime( 0,  0);
+    $timeMax = new DateTime();
+    $timeMax->setTime(23, 59);
+
+    $events = $service->events->listEvents($calid, array(
+      'singleEvents' => 'true',
+      'timeMin' => $timeMin->format(DateTime::RFC3339),
+      'timeMax' => $timeMax->format(DateTime::RFC3339),
+    ));
+
+    $active = $i == 0 ? 'active' : '';
+
+    $out .= '<div role="tabpanel" class="tab-pane ' . $active . '" id="lib' . $node->nid . '">';
+    $out .= '<table class="table table-bordered table-hover">';
+    $out .= '<tr>';
+
+    // Loop over events
+    foreach ($events->getItems() as $event) {
+      $start = strtotime($event->getStart()->dateTime);
+      $end = strtotime($event->getEnd()->dateTime);
+      $out .= "<td colspan=\"2\">De " . date('G\:i', $start) . " à " . date('G\:i', $end) . "</td>";
+    }
+    if (!count($events->getItems()))
+    {
+      $out .= "<td colspan=\"2\">Fermé aujourd'hui</td>";
+    }
+    $out .= '</tr>';
+    $out .= '<tr>';
+    $out .= '<td><a href="node/'.$node->nid.'/thisweeklib">Prochains jours</a></td>';
+    $out .= '<td><a href="node/'.$node->nid.'">Venir</a></td>';
+    $out .= "</tr>";
+    $out .= "</table>";
+    $out .= "</div>";
+    $i++;
+  }
+  $out .= "</div>";
+  $out .= "</div>";
 
   return $out;
 }
