@@ -145,15 +145,17 @@ function scdcalendar_todaypole($pole) {
     $out .= "<tr><td>" . $node->title . "</td>";
 
     // Loop over events
+    $out .= "<td>";
     foreach ($events->getItems() as $event) {
       $start = strtotime($event->getStart()->dateTime);
       $end = strtotime($event->getEnd()->dateTime);
-      $out .= "<td>De " . date('G\:i', $start) . " à " . date('G\:i', $end) . "</td>";
+      $out .= "<div>De " . date('G\:i', $start) . " à " . date('G\:i', $end) . "</div>";
     }
     if (!count($events->getItems()))
     {
-      $out .= "<td>Fermé aujourd'hui</td>";
+      $out .= "Fermé aujourd'hui";
     }
+    $out .= "</td>";
     $out .= '<td><a href="node/'.$node->nid.'/thisweeklib">Prochains jours</a></td>';
     $out .= '<td><a href="node/'.$node->nid.'">Venir</a></td>';
     $out .= '<td><a href="node/'.$node->nid.'/thisyearlib">...</a></td>';
@@ -208,15 +210,17 @@ function scdcalendar_todaypole($pole) {
     $out .= '<tr>';
 
     // Loop over events
+    $out .= "<td colspan=\"2\">";
     foreach ($events->getItems() as $event) {
       $start = strtotime($event->getStart()->dateTime);
       $end = strtotime($event->getEnd()->dateTime);
-      $out .= "<td colspan=\"2\">De " . date('G\:i', $start) . " à " . date('G\:i', $end) . "</td>";
+      $out .= "<div>De " . date('G\:i', $start) . " à " . date('G\:i', $end) . "</div>";
     }
     if (!count($events->getItems()))
     {
-      $out .= "<td colspan=\"2\">Fermé aujourd'hui</td>";
+      $out .= "Fermé aujourd'hui";
     }
+    $out .= '</td>';
     $out .= '</tr>';
     $out .= '<tr>';
     $out .= '<td><a href="node/'.$node->nid.'/thisweeklib">Prochains jours</a></td>';
