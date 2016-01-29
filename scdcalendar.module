@@ -417,11 +417,15 @@ function scdcalendar_thisyearlib($nid) {
     $days[] = date('Y-m-d', strtotime($event->getStart()->dateTime));
   }
 
+  $startmonth = date('m');
+  $startyear  = date('Y');
   $out = "<div class=\"containeri-fluid\">";
   $out .= "<div class=\"row\">";
-  for ($i = 1; $i <= 12; $i++)
+  for ($i = $startmonth; $i <= $startmonth+11; $i++)
   {
-    $out .= "<div class=\"scdcalcol col-md-4 col-sm-6 col-xs-12\">" . build_year_calendar($i, date("Y"), $days) . "</div>";
+    $month = $i % 12;
+    $year = $startyear + floor($i / 12);
+    $out .= "<div class=\"scdcalcol col-md-4 col-sm-6 col-xs-12\">" . build_year_calendar($month, $year, $days) . "</div>";
   }
   $out .= "</div>";
   $out .= "</div>";
