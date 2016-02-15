@@ -8,6 +8,11 @@ function scdcalendar_help($path, $arg) {
   }
 } 
 
+function scdcalendar_access_check($nid) {
+  $node = node_load($nid);
+  return $node->type == 'library';
+}
+
 function scdcalendar_menu() {
 
   $items[] = array(
@@ -33,7 +38,7 @@ function scdcalendar_menu() {
     'page callback' => 'scdcalendar_thisweeklib',
     'page arguments' => array(1),
     'access arguments' => array(1),
-    'access callback' => TRUE,
+    'access callback' => 'scdcalendar_access_check',
     'type' => MENU_LOCAL_TASK,
     'weight' => 1,
   );
@@ -43,7 +48,7 @@ function scdcalendar_menu() {
     'page callback' => 'scdcalendar_thisyearlib',
     'page arguments' => array(1),
     'access arguments' => array(1),
-    'access callback' => TRUE,
+    'access callback' => 'scdcalendar_access_check',
     'type' => MENU_LOCAL_TASK,
     'weight' => 2,
   );
@@ -385,6 +390,25 @@ function build_week_calendar($node) {
 
 function scdcalendar_thisweeklib($nid) {
   return build_week_calendar(node_load($nid));
+}
+
+function scdcalendar_block_info() {
+  $blocks['thisweeklib'] = array(
+    'info' => t('Horaires de la bibliothèque cette semaine.'),
+    'cache' => DRUPAL_NO_CACHE,
+  );
+
+  return $blocks;
+}
+
+function scdcalendar_block_view($delta = '') {
+  switch($delta) {
+    case 'thisweeklib':
+      $block['content'] = build_week_calendar(node_load(arg(1)));
+      break;
+  }
+
+  return $block;
 }
 
 function scdcalendar_thisyearlib($nid) {
