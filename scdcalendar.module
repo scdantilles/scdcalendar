@@ -165,7 +165,7 @@ function scdcalendar_todaypole($pole) {
     $out .= '<td><a href="venir/'.$node->nid.'">Venir</a></td>';
     $out .= '<td><a href="node/'.$node->nid.'/thisyearlib">...</a></td>';
     $out .= "</tr>";
-    $out .= '<tr id="thisweeklib-'.$node->nid.'" class="collapse thisweeklib"><td colspan="4">'.scdcalendar_thisweeklib($node->nid).'</td></tr>';
+    $out .= '<tr id="thisweeklib-'.$node->nid.'" class="collapse thisweeklib"><td colspan="5">'.scdcalendar_thisweeklib($node->nid).'</td></tr>';
   }
   $out .= "</table>";
 
