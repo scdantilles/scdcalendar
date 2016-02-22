@@ -229,9 +229,10 @@ function scdcalendar_todaypole($pole) {
     $out .= '</td>';
     $out .= '</tr>';
     $out .= '<tr>';
-    $out .= '<td><a href="node/'.$node->nid.'/thisweeklib">Prochains jours</a></td>';
+    $out .= '<td><a href="#thisweeklib-xs-'.$node->nid.'" data-toggle="collapse">Prochains jours</a></td>';
     $out .= '<td><a href="venir/'.$node->nid.'">Venir</a></td>';
     $out .= "</tr>";
+    $out .= '<tr id="thisweeklib-xs-'.$node->nid.'" class="collapse"><td colspan="2">'.scdcalendar_thisweeklib($node->nid).'</td></tr>';
     $out .= "</table>";
     $out .= "</div>";
     $i++;
@@ -338,7 +339,7 @@ function build_week_calendar($node) {
 
   $timeMin = new DateTime();
   $timeMax = new DateTime();
-  $timeMax->modify('+1 week');
+  $timeMax->modify('+8 days');
 
   $events = $service->events->listEvents($calid, array(
     'singleEvents' => 'true',
