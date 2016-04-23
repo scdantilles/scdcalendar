@@ -122,7 +122,7 @@ function scdcalendar_todaypole($pole) {
     $nodes = entity_load('node', $nids);
   }
 
-  $out = '<table id="todaypole" class="table table-bordered table-hover hidden-xs">';
+  $out = '<table id="todaypole" class="table hidden-xs">';
   // Loop over libraries
   foreach ($nodes as $node) {
     if (!array_key_exists(LANGUAGE_NONE, $node->field_google_account_name)
@@ -162,8 +162,8 @@ function scdcalendar_todaypole($pole) {
     }
     $out .= "</td>";
     $out .= '<td><a href="#thisweeklib-'.$node->nid.'" data-toggle="collapse">Prochains jours</a></td>';
-    $out .= '<td><a href="venir/'.$node->nid.'">Venir</a></td>';
-    $out .= '<td><a href="node/'.$node->nid.'/thisyearlib">...</a></td>';
+    $out .= '<td><a class="btn btn-default btn-sm btn-white" href="venir/'.$node->nid.'">Venir</a></td>';
+    $out .= '<td><a class="btn btn-default btn-sm btn-white" href="node/'.$node->nid.'/thisyearlib">...</a></td>';
     $out .= "</tr>";
     $out .= '<tr id="thisweeklib-'.$node->nid.'" class="collapse thisweeklib"><td colspan="5">'.scdcalendar_thisweeklib($node->nid).'</td></tr>';
   }
@@ -339,7 +339,7 @@ function build_week_calendar($node) {
 
   $timeMin = new DateTime();
   $timeMax = new DateTime();
-  $timeMax->modify('+8 days');
+  $timeMax->modify('+1 week');
 
   $events = $service->events->listEvents($calid, array(
     'singleEvents' => 'true',
