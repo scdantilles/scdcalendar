@@ -16,11 +16,9 @@ function scdcalendar_access_check($nid) {
 function scdcalendar_menu() {
 
   $items[] = array(
-    'path' => 'todaypole/%',
+    'path' => 'todaypole',
     'title' => 'Aujourd\'hui',
     'page callback' => 'scdcalendar_todaypole',
-    'page arguments' => array(1),
-    'access arguments' => array(1),
     'access callback' => TRUE,
   );
 
@@ -101,7 +99,12 @@ function scdcalendar_node_view($node, $view_mode, $langcode) {
   }
 }
 
-function scdcalendar_todaypole($pole) {
+function scdcalendar_todaypole() {
+  $pole = 10;
+
+  if ($_SERVER['SERVER_NAME'] == 'bumartinique.univ-ag.fr')
+    $pole = 11;
+
   drupal_set_title("");
 
   $dt = new DateTime();
