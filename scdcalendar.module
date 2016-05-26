@@ -100,12 +100,15 @@ function scdcalendar_node_view($node, $view_mode, $langcode) {
 }
 
 function scdcalendar_todaypole() {
-  $pole = 10;
+
+  drupal_set_title("");
 
   if ($_SERVER['SERVER_NAME'] == 'bumartinique.univ-ag.fr')
     $pole = 11;
-
-  drupal_set_title("");
+  elseif ($_SERVER['SERVER_NAME'] == 'buguadeloupe.univ-ag.fr')
+    $pole = 10;
+  else
+    return "";
 
   $dt = new DateTime();
   $now = $dt->getTimestamp();
@@ -215,7 +218,7 @@ function scdcalendar_todaypole() {
     $active = $i == 0 ? 'active' : '';
 
     $out .= '<div role="tabpanel" class="tab-pane ' . $active . '" id="lib' . $node->nid . '">';
-    $out .= '<table class="table table-bordered table-hover">';
+    $out .= '<table class="table table-bordered">';
     $out .= '<tr>';
 
     // Loop over events
@@ -232,8 +235,8 @@ function scdcalendar_todaypole() {
     $out .= '</td>';
     $out .= '</tr>';
     $out .= '<tr>';
-    $out .= '<td><a href="#thisweeklib-xs-'.$node->nid.'" data-toggle="collapse">Prochains jours</a></td>';
-    $out .= '<td><a href="venir/'.$node->nid.'">Venir</a></td>';
+    $out .= '<td class="col-xs-6"><a href="#thisweeklib-xs-'.$node->nid.'" data-toggle="collapse">Prochains jours</a></td>';
+    $out .= '<td class="col-xs-6"><a href="venir/'.$node->nid.'">Venir</a></td>';
     $out .= "</tr>";
     $out .= '<tr id="thisweeklib-xs-'.$node->nid.'" class="collapse thisweeklib"><td colspan="2">'.scdcalendar_thisweeklib($node->nid).'</td></tr>';
     $out .= "</table>";
