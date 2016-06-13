@@ -176,6 +176,7 @@ function scdcalendar_todaypole() {
   $out .= "</table>";
 
   $out .= '<div id="todaypole" class="visible-xs">';
+  $out .= '<div class="shadow-container">';
   $out .= '<ul class="nav nav-tabs" role="tablist">';
   // Build nav tabs
   $i = 0;
@@ -243,6 +244,7 @@ function scdcalendar_todaypole() {
     $out .= "</div>";
     $i++;
   }
+  $out .= "</div>";
   $out .= "</div>";
   $out .= "</div>";
 
