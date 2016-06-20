@@ -31,7 +31,7 @@ function scdcalendar_menu() {
     'access callback' => TRUE,
   );
 
-  $items['node/%/thisweeklib'] = array(
+/*  $items['node/%/thisweeklib'] = array(
     'title' => 'Cette semaine',
     'page callback' => 'scdcalendar_thisweeklib',
     'page arguments' => array(1),
@@ -39,7 +39,7 @@ function scdcalendar_menu() {
     'access callback' => 'scdcalendar_access_check',
     'type' => MENU_LOCAL_TASK,
     'weight' => 1,
-  );
+  );*/
 
   $items['node/%/thisyearlib'] = array(
     'title' => 'Cette année',
@@ -47,8 +47,8 @@ function scdcalendar_menu() {
     'page arguments' => array(1),
     'access arguments' => array(1),
     'access callback' => 'scdcalendar_access_check',
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 2,
+    /*'type' => MENU_LOCAL_TASK,
+    'weight' => 2,*/
   );
 
   return $items;
@@ -169,7 +169,7 @@ function scdcalendar_todaypole() {
     $out .= "</td>";
     $out .= '<td><span class="next-days" href="#thisweeklib-'.$node->nid.'" data-toggle="collapse">Prochains jours <b class="caret"></b></span></td>';
     $out .= '<td><a class="btn btn-primary btn-sm" href="venir/'.$node->nid.'">Venir</a></td>';
-    $out .= '<td><a class="btn btn-primary btn-sm" href="node/'.$node->nid.'/thisyearlib">•••</a></td>';
+    $out .= '<td><a class="btn btn-primary btn-sm" href="node/'.$node->nid.'">•••</a></td>';
     $out .= "</tr>";
     $out .= '<tr id="thisweeklib-'.$node->nid.'" class="collapse thisweeklib"><td colspan="5">'.scdcalendar_thisweeklib($node->nid).'</td></tr>';
   }
@@ -375,18 +375,18 @@ function build_week_calendar($node) {
     );
   }
 
-  $out .= "<div class=\"days\">";
+  $out .= "<div class=\"row\">";
   // Loop over days
   ksort($days);
   foreach ($days as $day => $fields) {
-    $out .= "<p>" . ucfirst(strftime("%A %e", strtotime($day))) . ", ";
+    $out .= "<div class=\"col-sm-6\"><div class=\"day\">" . ucfirst(strftime("%A %e", strtotime($day))) . ", ";
     $i = 0;
     foreach ($fields as $field) {
       $out .= $i ? " et de " : "de ";
       $out .= $field['start'] . " à " . $field['end'];
       $i++;
     }
-    $out .= "</p>";
+    $out .= "</div></div>";
   }
 
   if (!count($days))
