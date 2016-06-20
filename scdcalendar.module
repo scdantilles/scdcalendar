@@ -54,7 +54,7 @@ function scdcalendar_menu() {
   return $items;
 }
 
-function scdcalendar_node_view($node, $view_mode, $langcode) {
+/*function scdcalendar_node_view($node, $view_mode, $langcode) {
   if ($node->type == 'library' && $view_mode == 'full') {
 
     if (!array_key_exists(LANGUAGE_NONE, $node->field_google_account_name)
@@ -97,7 +97,7 @@ function scdcalendar_node_view($node, $view_mode, $langcode) {
       '#weight' => 10,
     );
   }
-}
+}*/
 
 function scdcalendar_todaypole() {
 
