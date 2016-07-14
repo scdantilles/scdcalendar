@@ -61,7 +61,8 @@ function scdcalendar_todaypole() {
   $query->entityCondition('entity_type', 'node')
     ->entityCondition('bundle', 'library')
     ->fieldCondition('field_pole', 'tid', $pole)
-    ->propertyCondition('status', NODE_PUBLISHED);
+    ->propertyCondition('status', NODE_PUBLISHED)
+    ->fieldOrderBy('field_weight', 'value', 'ASC');
 
   $result = $query->execute();
 
