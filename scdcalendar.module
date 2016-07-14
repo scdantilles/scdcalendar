@@ -357,7 +357,7 @@ function build_week_calendar($node) {
 
   if (!count($days))
   {
-    $out .= "<p>Fermé cette semaine.</p>";
+    $out .= "<div class=\"col-xs-12\"><p>Fermé cette semaine.</p></div>";
   }
 
   $out .= "</div>";
