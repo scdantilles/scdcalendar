@@ -376,6 +376,10 @@ function scdcalendar_block_info() {
     'info' => t('Horaires de la bibliothèque cette semaine.'),
     'cache' => DRUPAL_NO_CACHE,
   );
+  $blocks['thisyearlib'] = array(
+    'info' => t('Horaires de la bibliothèque cette année.'),
+    'cache' => DRUPAL_NO_CACHE,
+  );
 
   return $blocks;
 }
@@ -384,6 +388,9 @@ function scdcalendar_block_view($delta = '') {
   switch($delta) {
     case 'thisweeklib':
       $block['content'] = build_week_calendar(node_load(arg(1)));
+      break;
+    case 'thisyearlib':
+      $block['content'] = scdcalendar_thisyearlib(arg(1));
       break;
   }
 
@@ -426,7 +433,15 @@ function scdcalendar_thisyearlib($nid) {
 
   $startmonth = date('m');
   $startyear  = date('Y');
-  $out = "<div class=\"containeri-fluid\">";
+  $out = "<a data-toggle=\"modal\" data-target=\".bs-example-modal-lg\">Les dates d'ouverture de l'année</a>";
+  $out .= "<div class=\"modal fade bs-example-modal-lg\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"myLargeModalLabel\">";
+  $out .= "<div class=\"modal-dialog modal-lg\">";
+  $out .= "<div class=\"modal-content\">";
+  $out .= "<div class=\"modal-header\">";
+  $out .= "<button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-label=\"Close\"><span aria-hidden=\"true\">×</span></button>";
+  $out .= "<h4 class=\"modal-title\" id=\"myLargeModalLabel\">Les dates d'ouverture de l'année</h4>";
+  $out .= "</div>";
+  $out .= "<div class=\"modal-body\">";
   $out .= "<div class=\"row\">";
   for ($i = $startmonth; $i <= $startmonth+11; $i++)
   {
@@ -434,6 +449,9 @@ function scdcalendar_thisyearlib($nid) {
     $year = $startyear + floor($i / 12);
     $out .= "<div class=\"scdcalcol col-md-4 col-sm-6 col-xs-12\">" . build_month_calendar($month, $year, $days) . "</div>";
   }
+  $out .= "</div>";
+  $out .= "</div>";
+  $out .= "</div>";
   $out .= "</div>";
   $out .= "</div>";
 
