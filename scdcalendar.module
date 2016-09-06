@@ -415,9 +415,9 @@ function scdcalendar_thisyearlib($nid) {
   $service = new Google_Service_Calendar($client);
 
   $timeMin = new DateTime();
-  $timeMin->modify('-1 year');
+  $timeMin->modify('-1 month');
   $timeMax = new DateTime();
-  $timeMax->modify('+1 year');
+  $timeMax->modify('+12 month');
 
   $events = $service->events->listEvents($calid, array(
     'singleEvents' => 'true',
