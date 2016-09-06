@@ -1,8 +1,12 @@
 .scdcalcol {
-  height: 360px;
+  height: 280px;
 }
 
-.day.busy {
+.scdcalendar .day {
+  font-size: 11px;
+}
+
+.scdcalendar .day.busy {
   background-color: #dff0d8;
 }
 
@@ -11,5 +15,4 @@
 }
 
 .scdcalendar {
-  margin: 20px 0 0 0;
 }
