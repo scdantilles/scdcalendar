@@ -446,8 +446,9 @@ function scdcalendar_thisyearlib($nid) {
   for ($i = $startmonth; $i <= $startmonth+11; $i++)
   {
     $month = $i % 12;
-    $year = $startyear + floor($i / 12);
-    $out .= "<div class=\"scdcalcol col-md-4 col-sm-6 col-xs-12\">" . build_month_calendar($month, $year, $days) . "</div>";
+    if ($month == 0) { $month = 12; }
+    $year = $startyear + floor(($i-1) / 12);
+    $out .= "<div class=\"scdcalcol col-md-3 col-sm-6 col-xs-12\">" . build_month_calendar($month, $year, $days) . "</div>";
   }
   $out .= "</div>";
   $out .= "</div>";
