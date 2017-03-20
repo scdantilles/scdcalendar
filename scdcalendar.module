@@ -46,9 +46,9 @@ function scdcalendar_todaypole() {
 
   drupal_set_title("");
 
-  if ($_SERVER['SERVER_NAME'] == 'bumartinique.univ-ag.fr')
+  if ($_SERVER['SERVER_NAME'] == 'bumartinique.univ-antilles.fr')
     $pole = 11;
-  elseif ($_SERVER['SERVER_NAME'] == 'buguadeloupe.univ-ag.fr')
+  elseif ($_SERVER['SERVER_NAME'] == 'buguadeloupe.univ-antilles.fr')
     $pole = 10;
   else
     return "";
