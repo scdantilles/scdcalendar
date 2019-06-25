@@ -3,10 +3,10 @@
 function scdcalendar_help($path, $arg) {
   switch ($path) {
     case "admin/help#scdcalendar":
-      return '<p>' . t("Help text") . '</p>';
+      return '<p>' . t("Google Calendar Integration for the SCD website. You need to set your google calendar credentials in the settings interface, and fill the special fields in each content of the Library type.") . '</p>';
       break;
   }
-} 
+}
 
 function scdcalendar_access_check($nid) {
   $node = node_load($nid);
@@ -15,13 +15,16 @@ function scdcalendar_access_check($nid) {
 
 function scdcalendar_menu() {
 
+  /* Show the events today for a given pole */
   $items[] = array(
-    'path' => 'todaypole',
+    'path' => 'todaypole/%',
     'title' => 'Aujourd\'hui',
     'page callback' => 'scdcalendar_todaypole',
+    'page arguments' => array(1),
     'access callback' => TRUE,
   );
 
+  /* Show the events this week for a given pole */
   $items[] = array(
     'path' => 'thisweekpole',
     'title' => 'Cette semaine',
@@ -31,6 +34,7 @@ function scdcalendar_menu() {
     'access callback' => TRUE,
   );
 
+  /* Show the events this year for a library */
   $items['node/%/thisyearlib'] = array(
     'title' => 'Cette année',
     'page callback' => 'scdcalendar_thisyearlib',
@@ -42,22 +46,30 @@ function scdcalendar_menu() {
   return $items;
 }
 
-function scdcalendar_todaypole() {
-
+/* This function outputs two HTML blocks, one is visible on mobile and one on desktop. */
+function scdcalendar_todaypole($scdcalendar_todaypole) {
   drupal_set_title("");
 
+  $pole = $scdcalendar_todaypole;
+
+//print_r($scdcalendar_todaypole);
+
+/*
+// Sort of hardcoded. Get the pole ID for a domain name.
   if ($_SERVER['SERVER_NAME'] == 'bumartinique.univ-antilles.fr')
     $pole = 11;
   elseif ($_SERVER['SERVER_NAME'] == 'buguadeloupe.univ-antilles.fr')
     $pole = 10;
   else
     return "";
+*/
 
   $dt = new DateTime();
   $now = $dt->getTimestamp();
 
   $query = new EntityFieldQuery();
 
+  // query all the libraries
   $query->entityCondition('entity_type', 'node')
     ->entityCondition('bundle', 'library')
     ->fieldCondition('field_pole', 'tid', $pole)
@@ -72,6 +84,7 @@ function scdcalendar_todaypole() {
     $nodes = entity_load('node', $nids);
   }
 
+  /* DESKTOP VERSION */
   $out = '<table id="todaypole" class="table hidden-xs">';
   // Loop over libraries
   foreach ($nodes as $node) {
@@ -79,6 +92,7 @@ function scdcalendar_todaypole() {
      or !array_key_exists(LANGUAGE_NONE, $node->field_calendar_id))
       continue;
 
+    // Get the google cal credentials and calendar id
     $accountname = $node->field_google_account_name[LANGUAGE_NONE][0]['value'];
     $calid = $node->field_calendar_id[LANGUAGE_NONE][0]['value'];
 
@@ -86,11 +100,13 @@ function scdcalendar_todaypole() {
 
     $service = new Google_Service_Calendar($client);
 
+    // Set the time interval
     $timeMin = new DateTime();
     $timeMin->setTime( 0,  0);
     $timeMax = new DateTime();
     $timeMax->setTime(23, 59);
 
+    // Invoke the web service to get the events
     $events = $service->events->listEvents($calid, array(
       'singleEvents' => 'true',
       'timeMin' => $timeMin->format(DateTime::RFC3339),
@@ -112,13 +128,15 @@ function scdcalendar_todaypole() {
     }
     $out .= "</td>";
     $out .= '<td><span class="next-days" href="#thisweeklib-'.$node->nid.'" data-toggle="collapse">Prochains jours <b class="caret"></b></span></td>';
-    $out .= '<td><a class="btn btn-primary btn-sm" href="venir/'.$node->nid.'">Venir</a></td>';
-    $out .= '<td><a class="btn btn-primary btn-sm" href="node/'.$node->nid.'">•••</a></td>';
+    //$out .= '<td><a class="btn btn-primary btn-sm" href="venir/'.$node->nid.'">Venir</a></td>'; https://trello.com/c/DYJK4Q1w/94-unifier-boutons-venir-et-sur-home-sites-buguadeloupe-burecherche
+    //$out .= '<td><a class="btn btn-primary btn-sm" href="node/'.$node->nid.'">Plus d\'infos</a></td>';
+    $out .= '<td>' . l("Plus d'infos", 'node/' . $node->nid, array('attributes' => array('class' => array('btn', 'btn-primary','btn-sm')))) . '</td>';
     $out .= "</tr>";
     $out .= '<tr id="thisweeklib-'.$node->nid.'" class="collapse thisweeklib"><td colspan="5">'.scdcalendar_thisweeklib($node->nid).'</td></tr>';
   }
   $out .= "</table>";
 
+  /* MOBILE VERSION */
   $out .= '<div id="todaypole" class="visible-xs">';
   $out .= '<div class="shadow-container">';
   $out .= '<ul class="nav nav-tabs" role="tablist">';
@@ -142,6 +160,7 @@ function scdcalendar_todaypole() {
      or !array_key_exists(LANGUAGE_NONE, $node->field_calendar_id))
       continue;
 
+    // Get the google cal credentials and calendar id
     $accountname = $node->field_google_account_name[LANGUAGE_NONE][0]['value'];
     $calid = $node->field_calendar_id[LANGUAGE_NONE][0]['value'];
 
@@ -149,11 +168,13 @@ function scdcalendar_todaypole() {
 
     $service = new Google_Service_Calendar($client);
 
+    // Set the time interval
     $timeMin = new DateTime();
     $timeMin->setTime( 0,  0);
     $timeMax = new DateTime();
     $timeMax->setTime(23, 59);
 
+    // Invoke the web service to get the events
     $events = $service->events->listEvents($calid, array(
       'singleEvents' => 'true',
       'timeMin' => $timeMin->format(DateTime::RFC3339),
@@ -181,7 +202,7 @@ function scdcalendar_todaypole() {
     $out .= '</tr>';
     $out .= '<tr>';
     $out .= '<td class="col-xs-6"><a href="#thisweeklib-xs-'.$node->nid.'" data-toggle="collapse">Prochains jours</a></td>';
-    $out .= '<td class="col-xs-6"><a href="venir/'.$node->nid.'">Venir</a></td>';
+    $out .= '<td class="col-xs-6">' . l("Plus d'infos", 'node/' . $node->nid) . '</td>';
     $out .= "</tr>";
     $out .= '<tr id="thisweeklib-xs-'.$node->nid.'" class="collapse thisweeklib"><td colspan="2">'.scdcalendar_thisweeklib($node->nid).'</td></tr>';
     $out .= "</table>";
@@ -200,6 +221,7 @@ function scdcalendar_thisweekpole($pole) {
 
   $query = new EntityFieldQuery();
 
+  /* Query libraries */
   $query->entityCondition('entity_type', 'node')
     ->entityCondition('bundle', 'library')
     ->fieldCondition('field_pole', 'tid', $pole)
@@ -213,7 +235,7 @@ function scdcalendar_thisweekpole($pole) {
     $nodes = entity_load('node', $nids);
   }
 
-  // Loop over libraries
+  // Loop over libraries and invoke build_week_calendar for each
   foreach ($nodes as $node) {
     $out .= "<h3>" . $node->title . "</h3>";
     $out .= build_week_calendar($node);
@@ -222,6 +244,7 @@ function scdcalendar_thisweekpole($pole) {
   return $out;
 }
 
+/* This function builds a month calendar. It is used in a larger page that display events over 12 months */
 function build_month_calendar($month, $year, $days) {
   $first_day = mktime(0, 0, 0, $month, 1, $year);
   $title = ucfirst(strftime("%B", $first_day));
@@ -299,6 +322,7 @@ function build_month_calendar($month, $year, $days) {
   return $calendar;
 }
 
+/* Show the events of the week for a library */
 function build_week_calendar($node) {
   if (!array_key_exists(LANGUAGE_NONE, $node->field_google_account_name)
    or !array_key_exists(LANGUAGE_NONE, $node->field_calendar_id))
@@ -311,10 +335,12 @@ function build_week_calendar($node) {
 
   $service = new Google_Service_Calendar($client);
 
+  // Set time interval
   $timeMin = new DateTime();
   $timeMax = new DateTime();
   $timeMax->modify('+1 week');
 
+  // Query events
   $events = $service->events->listEvents($calid, array(
     'singleEvents' => 'true',
     'timeMin' => $timeMin->format(DateTime::RFC3339),
@@ -371,6 +397,7 @@ function scdcalendar_thisweeklib($nid) {
   return build_week_calendar(node_load($nid));
 }
 
+/* Blocks */
 function scdcalendar_block_info() {
   $blocks['thisweeklib'] = array(
     'info' => t('Horaires de la bibliothèque cette semaine.'),
@@ -397,6 +424,7 @@ function scdcalendar_block_view($delta = '') {
   return $block;
 }
 
+/* Events of the year. Call build_month_calendar 12 times. Will be displayed in a Bootstrap modal. */
 function scdcalendar_thisyearlib($nid) {
   $node = node_load($nid);
 
@@ -423,6 +451,7 @@ function scdcalendar_thisyearlib($nid) {
     'singleEvents' => 'true',
     'timeMin' => $timeMin->format(DateTime::RFC3339),
     'timeMax' => $timeMax->format(DateTime::RFC3339),
+    'orderBy' => 'startTime',
   ));
 
   $days = array();
