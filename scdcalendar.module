@@ -111,6 +111,7 @@ function scdcalendar_todaypole($scdcalendar_todaypole) {
       'singleEvents' => 'true',
       'timeMin' => $timeMin->format(DateTime::RFC3339),
       'timeMax' => $timeMax->format(DateTime::RFC3339),
+      'orderBy' => 'startTime',       
     ));
 
     $out .= "<tr><td>" . $node->title . "</td>";
@@ -179,6 +180,7 @@ function scdcalendar_todaypole($scdcalendar_todaypole) {
       'singleEvents' => 'true',
       'timeMin' => $timeMin->format(DateTime::RFC3339),
       'timeMax' => $timeMax->format(DateTime::RFC3339),
+      'orderBy' => 'startTime',      
     ));
 
     $active = $i == 0 ? 'active' : '';
@@ -345,6 +347,7 @@ function build_week_calendar($node) {
     'singleEvents' => 'true',
     'timeMin' => $timeMin->format(DateTime::RFC3339),
     'timeMax' => $timeMax->format(DateTime::RFC3339),
+    'orderBy' => 'startTime',
   ));
 
   $oldLocale = setlocale(LC_TIME, '0');
